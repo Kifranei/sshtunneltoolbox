@@ -3,6 +3,18 @@
 一个 Windows 下的 SSH 本地端口转发（`-L`）图形工具，底层调用 PuTTY 的 `plink.exe`。
 适合需要长期保持若干条隧道（数据库、远程桌面、内网 SSH 等）的场景：多配置、自动重连、托盘常驻、开机自启。
 
+## 版本
+
+| 版本 | 界面 | 运行环境 | 源码 |
+|---|---|---|---|
+| **2.0.0**（当前） | WinUI 3（Fluent 设计） | Windows 10 1809+ / Windows 11，x64 | `src/` |
+| 1.0.0 | WinForms | Windows 7 SP1 / 10 / 11，.NET Framework 4.7.2+ | `legacy/winforms/` |
+
+- 2.0.0 用 WinUI 3（Windows App SDK）重写，功能与 1.0.0 相同；**Win11 上使用云母（Mica）背景，Win10 上使用亚克力（Acrylic）背景**，两者都不支持时退回纯色背景。
+- 支持 **浅色 / 深色 / 跟随系统** 三种主题（默认跟随系统），可在“设置”或命令栏的主题按钮里切换，标题栏按钮颜色随主题变化，云母 / 亚克力背景在两种主题下都会正确着色。主题保存在配置文件的 `theme` 字段中。
+- 配置文件格式与 1.0.0 兼容：1.0.0 的配置可直接被 2.0.0 读取；2.0.0 只多写一个 `theme` 字段，1.0.0 读取时会忽略它。
+- 1.0.0 的 WinForms 版保留在 `legacy/winforms/`，供 Windows 7 等不支持 WinUI 3 的旧系统使用。
+
 ## 功能
 
 - 多个配置（每个配置一台 SSH 服务器 + 若干条 `-L` 端口转发），可新建 / 复制 / 重命名 / 删除
@@ -15,7 +27,8 @@
 
 ## 运行环境
 
-- Windows 7 SP1 / 10 / 11，.NET Framework 4.7.2 或更高（Windows 10 1803+ 自带）
+- 2.0.0：Windows 10 1809（17763）及以上 / Windows 11，x64。发布的 exe 为自包含单文件（内含 .NET 10 与 Windows App SDK 运行库），无需另外安装运行库；首次启动时会把运行库解压到 `%TEMP%\.net\SshTunnelToolbox\`。
+- 1.0.0（`legacy/winforms`）：Windows 7 SP1 / 10 / 11，.NET Framework 4.7.2 或更高
 - 已安装 [PuTTY](https://www.chiark.greenend.org.uk/~sgtatham/putty/)（需要其中的 `plink.exe`，建议 0.77 及以上）。
   程序会在 `C:\Program Files\PuTTY`、`C:\Program Files (x86)\PuTTY` 和 `PATH` 中查找，也可在“设置”里手动指定。
 - 配置保存在 `%APPDATA%\SshTunnelToolbox\config.json`
@@ -58,13 +71,34 @@ ssh -N -J jumpuser@10.0.0.1 -L 15432:192.0.2.30:5432 user@192.0.2.20
 
 ## 构建
 
+### 2.0.0（WinUI 3）
+
+需要 Windows 和 .NET SDK 10.0：
+
+```
+dotnet publish src/SshTunnelToolbox.csproj -c Release -o out
+```
+
+输出：`out/SshTunnelToolbox.exe`（x64 自包含单文件）。
+
+### 1.0.0（WinForms，旧系统用）
+
 需要 .NET SDK 6.0+（Windows / Linux / macOS 均可构建，引用程序集来自 NuGet 包 `Microsoft.NETFramework.ReferenceAssemblies`）：
 
 ```
-dotnet build src/SshTunnelToolbox.csproj -c Release
+dotnet build legacy/winforms/SshTunnelToolbox.csproj -c Release
 ```
 
-输出：`src/bin/Release/net472/SshTunnelToolbox.exe`（单文件，无额外 DLL）。
+输出：`legacy/winforms/bin/Release/net472/SshTunnelToolbox.exe`（单文件，无额外 DLL）。
+
+## 目录结构
+
+```
+src/                 2.0.0 WinUI 3 版
+  Core/              配置、plink 调用、隧道管理等（与界面无关）
+  UI/                窗口、对话框、托盘、主题与背景材质
+legacy/winforms/     1.0.0 WinForms 版
+```
 
 ## 注意事项
 
